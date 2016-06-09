@@ -37,6 +37,10 @@ class ViewController: UIViewController {
         if let digit = sender.currentTitle {
             if (userIsInTheMiddleOfTyping) {
                 let textCurrentlyInDisplay = display.text!;
+                // handle for the valid floating point
+                if (digit == "." && textCurrentlyInDisplay.rangeOfString(".") != nil) {
+                    return;
+                }
                 display.text = textCurrentlyInDisplay + digit;
             } else {
                 userIsInTheMiddleOfTyping = true;

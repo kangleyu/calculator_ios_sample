@@ -15,7 +15,12 @@ internal class CalculatorBrain { // internal means available in same module
         "π" : Operation.Constant(M_PI),
         "e" : Operation.Constant(M_E),
         "√" : Operation.UnaryOperation(sqrt),
+        "∛" : Operation.UnaryOperation(cbrt),
+        "x2" : Operation.UnaryOperation({ $0 * $0 }),
+        "x3" : Operation.UnaryOperation({ $0 * $0 * $0 }),
         "cos" : Operation.UnaryOperation(cos),
+        "sin" : Operation.UnaryOperation(sin),
+        "tan" : Operation.UnaryOperation(tan),
         "±" : Operation.UnaryOperation({ -$0 }), // closure inferred as single parameter
         "×" : Operation.BinaryOperation({ $0 * $1 }), // closure is used here
         "÷" : Operation.BinaryOperation({ $0 / $1 }),
@@ -54,7 +59,7 @@ internal class CalculatorBrain { // internal means available in same module
     
     var result: Double {
         get {
-            return accumulator;
+            return accumulator; "xs"
         }
     }
 }
