@@ -19,6 +19,9 @@ enum Operation {
     // a binaray operation like : + - etc.
     case BinaryOperation((Double, Double) -> Double)
     
+    // a special operation for random double
+    case Random(() -> Double);
+    
     // a special operation =
     case Equals
 }
