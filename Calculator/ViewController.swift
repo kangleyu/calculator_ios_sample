@@ -28,9 +28,19 @@ class ViewController: UIViewController {
         }
     }
     
+    private func updateDetails() {
+        let displayDetails = brain.description.isEmpty ?
+            "" :
+            (brain.isPartialResult ?
+                brain.description + "..." :
+                brain.description + "=");
+        details.text = displayDetails;
+    }
+    
     // Outlets
     @IBOutlet private weak var display: UILabel!;
     
+    @IBOutlet weak var details: UILabel!
     
     // Actions
     @IBAction private func touchDigit(sender: UIButton) {
@@ -58,7 +68,14 @@ class ViewController: UIViewController {
             brain.performOperation(mathmaticalSymbol);
         }
         displayValue = brain.result;
+        updateDetails();
     }
     
+    @IBAction func clear(sender: UIButton) {
+        brain.clear();
+        display.text = String("0");
+        details.text = "";
+        userIsInTheMiddleOfTyping = false;
+    }
 }
 
