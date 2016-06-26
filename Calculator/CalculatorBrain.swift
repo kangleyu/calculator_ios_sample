@@ -8,11 +8,28 @@
 
 import Foundation
 
-internal class CalculatorBrain { // internal means available in same module
-    typealias PropertyList = AnyObject;
+internal enum Accumulator {
+    case Number(Double)
     
-    private var internalProgram = [AnyObject]();
-    private var accumulator = 0.0;
+    case Variable(String)
+    
+    var displayValue: String {
+        switch self {
+        case .Number(let number):
+            return String(number);
+        case .Variable(let variableName):
+            return variableName;
+        }
+    }
+}
+
+internal class CalculatorBrain { // internal means available in same module
+    typealias PropertyList = Any;
+    
+    private var internalProgram = [Any]();
+    //private var accumulator = 0.0;
+    private var accumulator = Accumulator.Number(0.0);
+    
     private var operations: Dictionary<String, Operation> = [
         "π" : Operation.Constant(M_PI),
         "e" : Operation.Constant(M_E),
@@ -31,6 +48,8 @@ internal class CalculatorBrain { // internal means available in same module
         "−" : Operation.BinaryOperation({ $0 - $1 }),
         "=" : Operation.Equals
     ];
+    private var variableValues: Dictionary<String, Double> = [:];
+    
     private var pending: PendingBinaryOperationInfo?
     
     private var includeAccumulator: Bool = true;
@@ -46,13 +65,13 @@ internal class CalculatorBrain { // internal means available in same module
     
     private func executePendingBinaryOperation() {
         if pending != nil {
-            accumulator = pending!.binaryFunction(pending!.firstOperand, accumulator);
+            accumulator = .Number(pending!.binaryFunction(pending!.firstOperand, extractValue(accumulator)));
             pending = nil;
         }
     }
     
     private func updateDescription(symbol: String, operation: Operation) {
-        let displayOperand = useConstant ? lastConstant : String(accumulator);
+        let displayOperand = useConstant ? lastConstant : accumulator.displayValue;
         
         switch operation {
         case .Constant:
@@ -101,12 +120,24 @@ internal class CalculatorBrain { // internal means available in same module
     }
     
     func setOperand(operand: Double) {
-        accumulator = operand;
-        internalProgram.append(operand);
+        accumulator = .Number(operand);
+        internalProgram.append(Accumulator.Number(operand));
         if (!isPartialResult && !includeAccumulator)  {
             description = " ";
             includeAccumulator = true;
         }
+    }
+    
+    // allow to set variable name for the calculation
+    func setOperand(variableName: String) {
+        accumulator = .Variable(variableName);
+        internalProgram.append(Accumulator.Variable(variableName));
+        variableValues[variableName] = 0.0;
+    }
+    
+    func setVariableValue(variableName: String, value: Double) {
+        variableValues[variableName] = value;
+        //includeAccumulator = false;
     }
     
     func performOperation(symbol: String) {
@@ -115,18 +146,27 @@ internal class CalculatorBrain { // internal means available in same module
             updateDescription(symbol, operation: operation);
             switch operation {
             case .Constant(let value):
-                accumulator = value;
+                accumulator = .Number(value);
             case .UnaryOperation(let function):
-                accumulator = function(accumulator);
+                accumulator = .Number(function(extractValue(accumulator)));
             case.BinaryOperation(let function):
                 executePendingBinaryOperation();
-                pending = PendingBinaryOperationInfo(binaryFunction: function, firstOperand: accumulator);
+                pending = PendingBinaryOperationInfo(binaryFunction: function, firstOperand: extractValue(accumulator));
             case.Equals:
                 executePendingBinaryOperation();
             case .Random(let getRandom):
-                accumulator = getRandom();
+                accumulator = .Number(getRandom());
             }
             
+        }
+    }
+    
+    private func extractValue(accumulator: Accumulator) -> Double {
+        switch accumulator {
+        case .Number(let value):
+            return value;
+        case .Variable(let variableName):
+            return variableValues[variableName] ?? 0.0;
         }
     }
     
@@ -136,10 +176,10 @@ internal class CalculatorBrain { // internal means available in same module
         }
         set {
             clear();
-            if let arrayOfOps = newValue as? [AnyObject] {
+            if let arrayOfOps = newValue as? [Any] {
                 for op in arrayOfOps {
-                    if let operand = op as? Double {
-                        setOperand(operand);
+                    if let operand = op as? Accumulator {
+                        setOperand(extractValue(operand));
                     }
                     else if let operation = op as? String {
                         performOperation(operation);
@@ -150,7 +190,7 @@ internal class CalculatorBrain { // internal means available in same module
     }
     
     func clear() {
-        accumulator = 0.0;
+        accumulator = .Number(0.0);
         pending = nil;
         description = " ";
         includeAccumulator = true;
@@ -161,7 +201,7 @@ internal class CalculatorBrain { // internal means available in same module
     
     var result: Double {
         get {
-            return accumulator;
+            return extractValue(accumulator);
         }
     }
 }
