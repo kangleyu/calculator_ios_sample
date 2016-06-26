@@ -46,6 +46,12 @@ class ViewController: UIViewController {
     
     @IBOutlet weak var squareOp: UIButton!
     
+    private func isNumeric(value: String) -> Bool {
+        return Double(value) != nil;
+    }
+    
+    private var savedProgram: CalculatorBrain.PropertyList?;
+    
     // Actions
     @IBAction private func touchDigit(sender: UIButton) {
         if let digit = sender.currentTitle {
@@ -67,6 +73,20 @@ class ViewController: UIViewController {
         }
     }
     
+    
+    @IBAction func touchVariableName(sender: UIButton) {
+        brain.setOperand("M");
+        userIsInTheMiddleOfTyping = false;
+        displayValue = brain.result;
+    }
+    
+    @IBAction func enterVariableValue() {
+        brain.setVariableValue("M", value: displayValue!);
+        brain.program = savedProgram;
+        displayValue = brain.result;
+        userIsInTheMiddleOfTyping = false;
+    }
+    
     @IBAction private func performOperation(sender: UIButton) {
         if userIsInTheMiddleOfTyping {
             if let operand = displayValue {
@@ -79,6 +99,7 @@ class ViewController: UIViewController {
         }
         displayValue = brain.result;
         updateDetails();
+        savedProgram = brain.program;
     }
     
     @IBAction func backspace() {
@@ -98,19 +119,6 @@ class ViewController: UIViewController {
         display.text = String("0");
         details.text = " ";
         userIsInTheMiddleOfTyping = false;
-    }
-    
-    private var savedProgram: CalculatorBrain.PropertyList?;
-    
-    @IBAction func save() {
-        savedProgram = brain.program;
-    }
-    
-    @IBAction func restore() {
-        if savedProgram != nil {
-            brain.program = savedProgram!;
-            displayValue = brain.result;
-        }
     }
     
     override func viewDidLoad() {
